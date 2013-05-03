@@ -7,6 +7,10 @@ hr {
     margin-top: 0px;
 }
 
+textarea {
+    width: 1170px;
+}
+
 tr.document-row {
     font-size: x-large;
 }
@@ -55,6 +59,10 @@ p.empty-folder {
 
 .logo {
     float:left;
+}
+
+.btn {
+    margin-bottom: 15px;
 }
 
 .search {
@@ -110,4 +118,5 @@ p.empty-folder {
 
 .export {
     float: right;
+    padding-right: 20px;
 }

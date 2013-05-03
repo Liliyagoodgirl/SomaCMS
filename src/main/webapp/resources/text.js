@@ -5,7 +5,7 @@ function saveText(text, documentId) {
         url: contextPath + "/admin/api/document/" + documentId + "/save",
         success: function(result) {
             notify("Document Saved!");
-            window.editor.markClean();
+            if (window.editor != null) window.editor.markClean();
             updateEditorButtons(false);
         },
         error: function() {
@@ -28,19 +28,20 @@ function discardText() {
 }
 
 function updateEditorButtons(unsavedChanges) {
-    $('#save').attr('disabled', !unsavedChanges);
+    //$('#save').attr('disabled', !unsavedChanges);
     $('#discard').attr('disabled', !unsavedChanges);
     $('#upload').attr('disabled', unsavedChanges);
 }
 
 function initializeEditor(editorMode) {
-    window.editor = CodeMirror.fromTextArea(document.getElementById("code"), {
+    var cm = CodeMirror.fromTextArea(document.getElementById("code"), {
         mode: editorMode,
         tabMode: "indent",
         lineNumbers:true,
         matchBrackets:true,
         viewportMargin:Infinity
     });
+    window.editor = cm;
 
     updateEditorButtons(false);
     editor.on("change", function() {
@@ -52,4 +53,8 @@ function initializeEditor(editorMode) {
             return 'Your document contains unsaved changes.'
         }
     };
+
+    return cm;
+    //cm.save();
+    //cm.toTextArea();
 }

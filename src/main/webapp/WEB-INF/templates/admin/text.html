@@ -13,13 +13,15 @@
         <div class="span12">
             <div th:include="admin/fragments :: top-bar"></div>
             <div th:include="admin/fragments :: breadcrumbs"></div>
-            <form><textarea id="code" name="code" th:text="${documentText}"></textarea></form>
+            <button type="button" id="switch" class="btn" onclick="switchView()">Text/HTML</button>
+            <form><textarea id="code" name="code" th:text="${documentText}"></textarea>
+            </form>
         </div>
     </div>
     <div class="row-fluid">
         <div class="span11">
             <button type="button" id="discard" class="btn" onclick="discardText()">Discard</button>
-            <button type="button" id="save" class="btn btn-success" onclick="saveText(editor.getValue(), currentDocument.id)">Save</button>
+            <button type="button" id="save" class="btn btn-success" onclick="saveData()">Save</button>
             <div id="upload" class="btn">
                 <i class="icon-upload"></i> Upload
             </div>
@@ -38,11 +40,38 @@
 <script th:inline="javascript">
     /*<![CDATA[*/
     var editorMode = /*[[${document.mimeType}]]*/ null;
+    var area, codeMirror;
     /*]]>*/
 
     $(document).ready(function() {
-        initializeEditor(editorMode);
+        switchView();
     });
+
+    function switchView() {
+
+        if(!area) {
+            if (codeMirror != null) codeMirror.toTextArea();
+            area = new nicEditor({fullPanel : true}).panelInstance('code',{hasPanel : true});
+            area.addEvent('focus', function() {
+                $('#discard').attr('disabled', false);
+            });
+        } else {
+            area.removeInstance('code');
+            area = null;
+            codeMirror = initializeEditor(editorMode);
+        }
+    }
+
+    function saveData() {
+        var text;
+        if (nicEditors.findEditor('code') != null) {
+            text = nicEditors.findEditor('code').nicInstances[0].getContent();
+        } else {
+            text = editor.getValue();
+        }
+        saveText(text, currentDocument.id)
+    }
+
 </script>
 
 
@@ -52,6 +81,7 @@
 <script th:src="@{/resources/libraries/codemirror/mode/css/css.js}" src="../../../resources/libraries/codemirror/mode/css/css.js"></script>
 <script th:src="@{/resources/libraries/codemirror/mode/vbscript/vbscript.js}" src="../../../resources/libraries/codemirror/mode/vbscript/vbscript.js"></script>
 <script th:src="@{/resources/libraries/codemirror/mode/htmlmixed/htmlmixed.js}" src="../../../resources/libraries/codemirror/mode/htmlmixed/htmlmixed.js"></script>
+<script th:src="@{/resources/libraries/nicEdit/nicEdit.js}" src="../../../resources/libraries/nicEdit/nicEdit.js" type="text/javascript"></script>
 
 </body>
 </html>
