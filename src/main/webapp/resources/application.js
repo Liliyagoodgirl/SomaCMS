@@ -37,6 +37,7 @@ function initializeUploader(document) {
                     bootbox.alert("The name of the current file <b>" + document.name + "</b> is different from the uploaded file <b>" + fileName + "</b>");
                     return false;
                 }
+                return true;
             },
             onUpload: function(id, fileName) {
                 progressBar.show();
