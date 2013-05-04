@@ -14,7 +14,12 @@ import javax.sql.DataSource;
 import java.sql.Blob;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 /**
  * SQL based implementation for storing the metadata
@@ -32,7 +37,9 @@ public class SqlDocumentDao implements DocumentDao {
 
     @Override
     public DatabaseDocument findById(long id) {
-        return jdbcTemplate.queryForObject("SELECT * FROM document WHERE id=?", new BeanPropertyRowMapper<DatabaseDocument>(), id);
+        String query = "SELECT * FROM document WHERE id=?";
+        DatabaseDocument document = (DatabaseDocument) jdbcTemplate.queryForObject(query, new Object[]{id}, new BeanPropertyRowMapper(DatabaseDocument.class));
+        return document;
     }
 
     @Override
@@ -56,6 +63,36 @@ public class SqlDocumentDao implements DocumentDao {
         } else {
             return jdbcTemplate.query("SELECT * FROM document WHERE parent_id=?", BeanPropertyRowMapper.newInstance(DatabaseDocument.class), parentId);
         }
+    }
+
+    @Override
+    public Integer numberOfVersions(Long parentId, String documentName) {
+        String nameTemplate = documentName + "_%";
+        String query = "SELECT name FROM document WHERE parent_id=? and name LIKE ?";
+        List<String> rows = jdbcTemplate.queryForList(query, String.class, parentId, nameTemplate);
+        Integer maxVersion = 0;
+        for (String name : rows) {
+            Integer version = Integer.parseInt(name.substring(nameTemplate.length()-1));
+            if (version > maxVersion) maxVersion = version;
+        }
+        return maxVersion;
+    }
+
+    @Override
+    public Long idOfOldestVersion(Long parentId, String documentName) throws ParseException {
+        String nameTemplate = documentName + "_%";
+        String query = "SELECT * FROM document WHERE parent_id=? and name LIKE ?";
+        List<DatabaseDocument> rows = jdbcTemplate.query(query, BeanPropertyRowMapper.newInstance(DatabaseDocument.class), parentId, nameTemplate);
+        Date oldestDate = new Date();
+        Long id = null;
+        for (DatabaseDocument document : rows) {
+            Date created = document.getModified();
+            if (created.compareTo(oldestDate) < 0 ) {
+                oldestDate = created;
+                id = document.getId();
+            }
+        }
+    return id;
     }
 
     @Override

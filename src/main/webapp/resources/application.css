@@ -12,11 +12,11 @@ textarea {
 }
 
 tr.document-row {
-    font-size: x-large;
+    font-size: large;
 }
 
 .breadcrumbs {
-    font-size: x-large;
+    font-size: large;
     padding-bottom: 20px;
 }
 
@@ -42,6 +42,10 @@ img.greyed-out, tr.greyed-out > td {
     margin-left: 20px;
 }
 
+#switch {
+    margin-bottom: 15px;
+}
+
 img.preview {
     display: block;
     margin-left: auto;
@@ -59,10 +63,6 @@ p.empty-folder {
 
 .logo {
     float:left;
-}
-
-.btn {
-    margin-bottom: 15px;
 }
 
 .search {

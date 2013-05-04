@@ -4,6 +4,7 @@ import fi.essentia.somacms.models.DatabaseDocument;
 import fi.essentia.somacms.models.Document;
 import fi.essentia.somacms.tree.TreeDocument;
 
+import java.text.ParseException;
 import java.util.List;
 
 /**
@@ -15,6 +16,9 @@ public interface DocumentDao {
     void update(Document document);
     List<DatabaseDocument> findByParentId(Long parentId);
     List<DatabaseDocument> findAll();
+
+    Integer numberOfVersions(Long parentId, String documentName);
+    Long idOfOldestVersion(Long parentId, String documentName) throws ParseException;
 
     void deleteById(Long documentId);
 

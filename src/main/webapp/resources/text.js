@@ -55,6 +55,4 @@ function initializeEditor(editorMode) {
     };
 
     return cm;
-    //cm.save();
-    //cm.toTextArea();
 }

@@ -8,11 +8,14 @@ import fi.essentia.somacms.dao.DocumentDao;
 import fi.essentia.somacms.models.DatabaseDocument;
 import org.apache.commons.lang.StringUtils;
 import org.apache.tika.Tika;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.PostConstruct;
+import java.text.ParseException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -22,6 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 @Transactional
 public class DocumentManagerImpl implements DocumentManager {
+    private static final Logger logger = LoggerFactory.getLogger(DocumentManagerImpl.class);
     private Tika tika = new Tika();
     private final Map<Long, TreeDocument> idToDocument = new ConcurrentHashMap<Long, TreeDocument>();
     private TreeDocument root;
@@ -132,11 +136,12 @@ public class DocumentManagerImpl implements DocumentManager {
     }
 
     @Override
-    public TreeDocument storeDocument(Long parentId, String fileName, byte[] bytes) {
+    public TreeDocument storeDocument(Long parentId, String fileName, byte[] bytes) throws ParseException {
         String mimeType = tika.detect(bytes, fileName);
         TreeDocument parent = folder(parentId);
         TreeDocument document = parent.childByName(fileName);
         if (document == null) {
+            logger.debug("New document, parentId = " + parentId + ", fileName = " + fileName);
             DatabaseDocument databaseDocument = new DatabaseDocument();
             databaseDocument.setName(fileName);
             databaseDocument.setParentId(parent.getId());
@@ -147,6 +152,42 @@ public class DocumentManagerImpl implements DocumentManager {
             dataDao.insertData(databaseDocument.getId(), bytes);
             document = addToTree(databaseDocument, parentId);
         } else {
+            //TODO Check the number of versions, should not be more than 5 for ex
+            // Store the current document as the next version
+            //TODO Change the version #
+            Integer latestVersion = documentDao.numberOfVersions(parentId, fileName);
+            logger.debug("latest version " + latestVersion);
+            // Create a new version
+            if (latestVersion < 5) {
+                String newVersion = Integer.toString(latestVersion + 1);
+                String newVersionFileName = fileName + "_" + newVersion;
+                DatabaseDocument databaseDocument = new DatabaseDocument();
+                databaseDocument.setName(newVersionFileName);
+                databaseDocument.setParentId(parentId);
+                databaseDocument.setModified(new Date());
+                byte[] currentBytes = dataDao.loadData(document.getId());
+                databaseDocument.setSize(currentBytes.length);
+                databaseDocument.setMimeType(document.getMimeType());
+                documentDao.save(databaseDocument);
+                dataDao.insertData(databaseDocument.getId(), currentBytes);
+                logger.debug("New version " + newVersion + " for the document, parentId = " + parentId + ", fileName = " + fileName);
+            }
+
+            // Overwrite the oldest version
+            else {
+                Long replaceDocumentId = documentDao.idOfOldestVersion(parentId, fileName);
+                logger.debug("replace id = " + replaceDocumentId);
+                DatabaseDocument oldestDocument = documentDao.findById(replaceDocumentId);
+                oldestDocument.setModified(new Date());
+                byte[] currentBytes = dataDao.loadData(document.getId());
+                oldestDocument.setSize(currentBytes.length);
+                oldestDocument.setMimeType(document.getMimeType());
+                documentDao.update(oldestDocument);
+                dataDao.updateData(replaceDocumentId, currentBytes);
+                logger.debug("Replaced oldest version for the document, documentId = " + replaceDocumentId);
+            }
+
+            // Deal with the current version of the document
             document.setModified(new Date());
             document.setSize(bytes.length);
             document.setMimeType(mimeType);

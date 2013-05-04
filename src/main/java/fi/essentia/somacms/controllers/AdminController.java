@@ -25,6 +25,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.text.ParseException;
 import java.util.Collection;
 
 /**
@@ -105,7 +106,7 @@ public class AdminController {
     }
 
     @RequestMapping(value="/api/document/{parentId}/files", method=RequestMethod.POST)
-    public @ResponseBody Result uploadFile(@PathVariable Long parentId, @RequestParam(value="qqfile", required=true) MultipartFile file, WebRequest request) throws IOException {
+    public @ResponseBody Result uploadFile(@PathVariable Long parentId, @RequestParam(value="qqfile", required=true) MultipartFile file, WebRequest request) throws IOException, ParseException {
         try {
             String contentType = file.getContentType();
             if (contentType.equals("application/zip")) {
@@ -126,7 +127,7 @@ public class AdminController {
     }
 
     @RequestMapping(value="/api/document/{documentId}/replace", method=RequestMethod.POST)
-    public @ResponseBody Result replace(@PathVariable Long documentId, @RequestParam(value="qqfile", required=true) MultipartFile file, WebRequest request) throws IOException {
+    public @ResponseBody Result replace(@PathVariable Long documentId, @RequestParam(value="qqfile", required=true) MultipartFile file, WebRequest request) throws IOException, ParseException {
         try {
             String contentType = file.getContentType();
             if (contentType.equals("application/zip")) {
@@ -149,7 +150,8 @@ public class AdminController {
     }
 
     @RequestMapping(value="/api/document/{documentId}/save", method=RequestMethod.PUT)
-    public @ResponseBody Result saveTextDocument(@PathVariable Long documentId, @RequestBody String contents) {
+    public @ResponseBody Result saveTextDocument(@PathVariable Long documentId, @RequestBody String contents) throws ParseException {
+
         TreeDocument document = documentManager.documentById(documentId);
         documentManager.storeDocument(document.getParentId(), document.getName(), contents.getBytes());
         return Result.success();

@@ -4,6 +4,7 @@ import fi.essentia.somacms.models.Document;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.text.ParseException;
 import java.util.Collection;
 import java.util.List;
 
@@ -15,7 +16,7 @@ public interface DocumentManager {
     TreeDocument documentById(Long id);
     TreeDocument createFolder(Long parentId, String name);
     TreeDocument createTextFile(Long parentId, String name);
-    TreeDocument storeDocument(Long parentId, String fileName, byte[] bytes);
+    TreeDocument storeDocument(Long parentId, String fileName, byte[] bytes) throws ParseException;
     TreeDocument deleteDocument(Long documentId);
     Collection<TreeDocument> documentsByPath(String path);
 }
