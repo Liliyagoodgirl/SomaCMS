@@ -51,9 +51,9 @@ public class SqlDocumentDao implements DocumentDao {
 
     @Override
     public void update(Document document) {
-        jdbcTemplate.update("UPDATE document SET name=?, size=?, parent_id=?, mime_type=?, folder=?, created=?, modified=? WHERE id=?",
+        jdbcTemplate.update("UPDATE document SET name=?, size=?, parent_id=?, mime_type=?, folder=?, created=?, modified=?, isVersion=? WHERE id=?",
                 document.getName(), document.getSize(), document.getParentId(), document.getMimeType(), document.isFolder(), document.getCreated(), document.getModified(),
-                document.getId());
+                document.isVersion(), document.getId());
     }
 
     @Override
@@ -98,6 +98,11 @@ public class SqlDocumentDao implements DocumentDao {
     @Override
     public List<DatabaseDocument> findAll() {
         return jdbcTemplate.query("SELECT * FROM document", BeanPropertyRowMapper.newInstance(DatabaseDocument.class));
+    }
+
+    @Override
+    public List<DatabaseDocument> findAllWithoutVersions() {
+        return jdbcTemplate.query("SELECT * FROM document WHERE isVersion IS NULL OR isVersion<>1", BeanPropertyRowMapper.newInstance(DatabaseDocument.class));
     }
 
     @Override public void deleteById(Long documentId) {

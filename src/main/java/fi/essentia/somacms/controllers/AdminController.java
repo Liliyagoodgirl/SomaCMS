@@ -179,10 +179,18 @@ public class AdminController {
     @RequestMapping(value= "/api/export/{documentId}", method = RequestMethod.GET)
     public void exportDocument(@PathVariable Long documentId, HttpServletResponse response) throws IOException {
         TreeDocument root = documentManager.documentById(documentId);
-        byte[] bytes = archiveHelper.documentAsArchive(root);
-        response.setContentType("application/zip");
-        response.setContentLength(bytes.length);
-        response.setHeader("Content-Disposition", "attachment; filename=\"" + root.getName() + ".zip\"");
+        byte[] bytes;
+        if (root.isFolder()) {
+            bytes = archiveHelper.documentAsArchive(root);
+            response.setContentType("application/zip");
+            response.setContentLength(bytes.length);
+            response.setHeader("Content-Disposition", "attachment; filename=\"" + root.getName() + ".zip\"");
+        } else {
+            bytes = dataDao.loadData(documentId);
+            response.setContentType(root.getMimeType());
+            response.setContentLength(bytes.length);
+            response.setHeader("Content-Disposition", "attachment; filename=\"" + root.getName());
+        }
 
         IOUtils.write(bytes, response.getOutputStream());
         response.flushBuffer();

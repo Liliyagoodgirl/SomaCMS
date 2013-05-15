@@ -14,24 +14,27 @@
             <div th:include="admin/fragments :: top-bar"></div>
             <div th:include="admin/fragments :: breadcrumbs"></div>
             <button type="button" id="switch" class="btn" onclick="switchView()">Text/HTML</button>
+            <div class="span1 preview">
+                <a href="#" th:href="@{${document.path}}">Preview</a>
+            </div>
             <form><textarea id="code" name="code" th:text="${documentText}"></textarea>
             </form>
         </div>
     </div>
     <div class="row-fluid">
-        <div class="span11">
+        <div class="span12">
             <button type="button" id="discard" class="btn" onclick="discardText()">Discard</button>
             <button type="button" id="save" class="btn btn-success" onclick="saveData()">Save</button>
             <div id="upload" class="btn">
                 <i class="icon-upload"></i> Upload
             </div>
             <button type="button" id="delete" class="btn btn-danger" onclick="deleteDocument(currentDocument.id, currentDocument.name, false, navigateToParent)"><i class="icon-remove"></i> Delete</button>
+            <a class="export" th:href="@{'/admin/api/export/' + ${document.id}}"><button class="btn btn">Export</button></a>
         </div>
-        <div class="span1 preview">
-            <a href="#" th:href="@{${document.path}}">Preview</a>
-        </div>
+
         <div class="span5" th:include="admin/fragments :: upload-progress"></div>
     </div>
+
     <div class="row-fluid">
         <div class="span12">
             <span class="breadcrumbs">History</span>

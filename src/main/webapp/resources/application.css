@@ -89,7 +89,8 @@ p.empty-folder {
 
 .preview {
     text-align: right;
-    vertical-align: text-top
+    vertical-align: text-top;
+    float: right !important;
 }
 
 .document-thumbnail {

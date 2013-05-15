@@ -11,6 +11,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -27,7 +28,7 @@ public class ArchiveHelper {
     @Autowired private DocumentManager documentManager;
     @Autowired private ReadOnlyDataDao readOnlyDataDao;
 
-    public void storeDocuments(TreeDocument targetFolder, byte[] bytes) throws IOException {
+    public void storeDocuments(TreeDocument targetFolder, byte[] bytes) throws IOException, ParseException {
         List<DocumentEntry> entries = new ArrayList<DocumentEntry>();
         ZipInputStream in = new ZipInputStream(new ByteArrayInputStream(bytes));
         ZipEntry zipEntry = in.getNextEntry();

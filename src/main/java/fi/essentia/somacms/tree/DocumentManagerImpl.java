@@ -58,7 +58,7 @@ public class DocumentManagerImpl implements DocumentManager {
     }
 
     private void loadDocuments() {
-        List<DatabaseDocument> databaseDocuments = documentDao.findAll();
+        List<DatabaseDocument> databaseDocuments = documentDao.findAllWithoutVersions();
         for (DatabaseDocument databaseDocument : databaseDocuments) {
             TreeDocument treeDocument = new TreeDocument(databaseDocument);
             idToDocument.put(treeDocument.getId(), treeDocument);
@@ -148,15 +148,18 @@ public class DocumentManagerImpl implements DocumentManager {
             databaseDocument.setModified(new Date());
             databaseDocument.setSize(bytes.length);
             databaseDocument.setMimeType(mimeType);
+            databaseDocument.setVersion(false);
             documentDao.save(databaseDocument);
             dataDao.insertData(databaseDocument.getId(), bytes);
             document = addToTree(databaseDocument, parentId);
         } else {
             //TODO Check the number of versions, should not be more than 5 for ex
+
             // Store the current document as the next version
             //TODO Change the version #
             Integer latestVersion = documentDao.numberOfVersions(parentId, fileName);
             logger.debug("latest version " + latestVersion);
+
             // Create a new version
             if (latestVersion < 5) {
                 String newVersion = Integer.toString(latestVersion + 1);
@@ -165,6 +168,7 @@ public class DocumentManagerImpl implements DocumentManager {
                 databaseDocument.setName(newVersionFileName);
                 databaseDocument.setParentId(parentId);
                 databaseDocument.setModified(new Date());
+                databaseDocument.setVersion(true);
                 byte[] currentBytes = dataDao.loadData(document.getId());
                 databaseDocument.setSize(currentBytes.length);
                 databaseDocument.setMimeType(document.getMimeType());
@@ -182,6 +186,7 @@ public class DocumentManagerImpl implements DocumentManager {
                 byte[] currentBytes = dataDao.loadData(document.getId());
                 oldestDocument.setSize(currentBytes.length);
                 oldestDocument.setMimeType(document.getMimeType());
+                oldestDocument.setVersion(true);
                 documentDao.update(oldestDocument);
                 dataDao.updateData(replaceDocumentId, currentBytes);
                 logger.debug("Replaced oldest version for the document, documentId = " + replaceDocumentId);
@@ -191,6 +196,7 @@ public class DocumentManagerImpl implements DocumentManager {
             document.setModified(new Date());
             document.setSize(bytes.length);
             document.setMimeType(mimeType);
+            document.setVersion(false);
             documentDao.update(document);
             dataDao.updateData(document.getId(), bytes);
         }

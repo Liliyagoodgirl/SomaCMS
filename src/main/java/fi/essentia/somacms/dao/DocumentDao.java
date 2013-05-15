@@ -16,6 +16,7 @@ public interface DocumentDao {
     void update(Document document);
     List<DatabaseDocument> findByParentId(Long parentId);
     List<DatabaseDocument> findAll();
+    List<DatabaseDocument> findAllWithoutVersions();
 
     Integer numberOfVersions(Long parentId, String documentName);
     Long idOfOldestVersion(Long parentId, String documentName) throws ParseException;
