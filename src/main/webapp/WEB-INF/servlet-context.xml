@@ -30,7 +30,8 @@
     <tx:annotation-driven transaction-manager="txManager"/>
 
     <!-- Database change management -->
-    <bean id="flyway" class="com.googlecode.flyway.core.Flyway" init-method="migrate" depends-on="dataSource" lazy-init="false">
+    <!--<bean id="flyway" class="com.googlecode.flyway.core.Flyway" init-method="migrate" depends-on="dataSource" lazy-init="false">-->
+    <bean id="flyway" class="com.googlecode.flyway.core.Flyway" init-method="migrate">
         <property name="dataSource" ref="dataSource"/>
         <property name="locations" value="migrations"/>
     </bean>

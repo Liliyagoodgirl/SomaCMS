@@ -15,7 +15,6 @@ import java.sql.Blob;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -43,6 +42,13 @@ public class SqlDocumentDao implements DocumentDao {
     }
 
     @Override
+    public DatabaseDocument findByParentIdAndName(long parentId, String documentName) {
+        String query = "SELECT * FROM document WHERE parent_id=? and name=?";
+        DatabaseDocument document = (DatabaseDocument) jdbcTemplate.queryForObject(query, new Object[]{parentId, documentName}, new BeanPropertyRowMapper(DatabaseDocument.class));
+        return document;
+    }
+
+    @Override
     public long save(DatabaseDocument databaseDocument) {
         Number key = insertDocument.executeAndReturnKey(new BeanPropertySqlParameterSource(databaseDocument));
         databaseDocument.setId(key.longValue());
@@ -51,9 +57,9 @@ public class SqlDocumentDao implements DocumentDao {
 
     @Override
     public void update(Document document) {
-        jdbcTemplate.update("UPDATE document SET name=?, size=?, parent_id=?, mime_type=?, folder=?, created=?, modified=?, isVersion=? WHERE id=?",
+        jdbcTemplate.update("UPDATE document SET name=?, size=?, parent_id=?, mime_type=?, folder=?, created=?, modified=?, backup=? WHERE id=?",
                 document.getName(), document.getSize(), document.getParentId(), document.getMimeType(), document.isFolder(), document.getCreated(), document.getModified(),
-                document.isVersion(), document.getId());
+                document.isBackup(), document.getId());
     }
 
     @Override
@@ -66,7 +72,7 @@ public class SqlDocumentDao implements DocumentDao {
     }
 
     @Override
-    public Integer numberOfVersions(Long parentId, String documentName) {
+    public Integer numberOfBackups(Long parentId, String documentName) {
         String nameTemplate = documentName + "_%";
         String query = "SELECT name FROM document WHERE parent_id=? and name LIKE ?";
         List<String> rows = jdbcTemplate.queryForList(query, String.class, parentId, nameTemplate);
@@ -79,7 +85,7 @@ public class SqlDocumentDao implements DocumentDao {
     }
 
     @Override
-    public Long idOfOldestVersion(Long parentId, String documentName) throws ParseException {
+    public Long idOfOldestBackup(Long parentId, String documentName) throws ParseException {
         String nameTemplate = documentName + "_%";
         String query = "SELECT * FROM document WHERE parent_id=? and name LIKE ?";
         List<DatabaseDocument> rows = jdbcTemplate.query(query, BeanPropertyRowMapper.newInstance(DatabaseDocument.class), parentId, nameTemplate);
@@ -101,8 +107,8 @@ public class SqlDocumentDao implements DocumentDao {
     }
 
     @Override
-    public List<DatabaseDocument> findAllWithoutVersions() {
-        return jdbcTemplate.query("SELECT * FROM document WHERE isVersion IS NULL OR isVersion<>1", BeanPropertyRowMapper.newInstance(DatabaseDocument.class));
+    public List<DatabaseDocument> findAllWithoutBackups() {
+        return jdbcTemplate.query("SELECT * FROM document WHERE backup<>1", BeanPropertyRowMapper.newInstance(DatabaseDocument.class));
     }
 
     @Override public void deleteById(Long documentId) {

@@ -18,6 +18,7 @@ tr.document-row {
 .breadcrumbs {
     font-size: large;
     padding-bottom: 20px;
+    display: inline-block;
 }
 
 td.link-row {

@@ -22,7 +22,7 @@ public class ImmutableDocument implements Document {
     @Getter private boolean folder;
     @Getter private Date created;
     @Getter private Date modified;
-    @Getter private boolean isVersion;
+    @Getter private boolean backup;
 
     public ImmutableDocument(Document document) {
         this.id = document.getId();
@@ -33,7 +33,7 @@ public class ImmutableDocument implements Document {
         this.folder = document.isFolder();
         this.created = document.getCreated();
         this.modified = document.getModified();
-        this.isVersion = document.isVersion();
+        this.backup = document.isBackup();
     }
 
 }

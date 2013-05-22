@@ -56,3 +56,4 @@ function initializeEditor(editorMode) {
 
     return cm;
 }
+
