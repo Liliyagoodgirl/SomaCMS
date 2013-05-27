@@ -18,10 +18,6 @@ public interface DocumentDao {
     void update(Document document);
     List<DatabaseDocument> findByParentId(Long parentId);
     List<DatabaseDocument> findAll();
-    List<DatabaseDocument> findAllWithoutBackups();
-
-    Integer numberOfBackups(Long parentId, String documentName);
-    Long idOfOldestBackup(Long parentId, String documentName) throws ParseException;
 
     void deleteById(Long documentId);
 }

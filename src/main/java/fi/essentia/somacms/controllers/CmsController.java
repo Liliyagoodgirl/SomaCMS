@@ -1,7 +1,6 @@
 package fi.essentia.somacms.controllers;
 
 import fi.essentia.somacms.dao.DataDao;
-import fi.essentia.somacms.dao.SqlDocumentDao;
 import fi.essentia.somacms.models.Document;
 import fi.essentia.somacms.tree.DocumentManager;
 import org.apache.commons.io.IOUtils;
@@ -57,7 +56,8 @@ public class CmsController {
             }
         }
 
-        byte[] bytes = dataDao.loadData(document.getId());
+        // TODO Change the version number
+        byte[] bytes = dataDao.loadData(document.getId(), 0);
         response.setContentType(document.getMimeType());
         response.setContentLength(bytes.length);
         IOUtils.write(bytes, response.getOutputStream());

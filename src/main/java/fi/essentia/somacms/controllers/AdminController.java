@@ -3,8 +3,10 @@ package fi.essentia.somacms.controllers;
 import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 import fi.essentia.somacms.dao.ReadOnlyDataDao;
+import fi.essentia.somacms.dao.SqlDocumentVersionDao;
 import fi.essentia.somacms.json.*;
 import fi.essentia.somacms.json.Error;
+import fi.essentia.somacms.models.DocumentVersion;
 import fi.essentia.somacms.tree.DocumentManager;
 import fi.essentia.somacms.tree.TreeDocument;
 import fi.essentia.somacms.tree.UnsupportedMimeTypeException;
@@ -39,6 +41,7 @@ public class AdminController {
     public static final String KEY_NEXT_MESSAGE = "nextMessage";
 
     @Autowired private DocumentManager documentManager;
+    @Autowired private SqlDocumentVersionDao documentVersionDao;
     @Autowired private ReadOnlyDataDao dataDao;
     @Autowired private ArchiveHelper archiveHelper;
     @Value("${somacms.version}") String version;
@@ -57,6 +60,7 @@ public class AdminController {
         model.addAttribute("contextPath", webRequest.getContextPath());
         model.addAttribute("document", document);
         model.addAttribute("version", version);
+        model.addAttribute("documentVersion", documentVersionDao);
 
         String nextMessage = (String)webRequest.getAttribute(KEY_NEXT_MESSAGE, RequestAttributes.SCOPE_SESSION);
         if (nextMessage != null) {
@@ -69,7 +73,7 @@ public class AdminController {
         } else if (document.isImage()) {
             return "admin/image";
         } else if (document.isText()) {
-            byte[] bytes = dataDao.loadData(document.getId());
+            byte[] bytes = dataDao.loadData(document.getId(), 0);
             model.addAttribute("documentText", new String(bytes));
             return "admin/text";
         } else {
@@ -186,7 +190,7 @@ public class AdminController {
             response.setContentLength(bytes.length);
             response.setHeader("Content-Disposition", "attachment; filename=\"" + root.getName() + ".zip\"");
         } else {
-            bytes = dataDao.loadData(documentId);
+            bytes = dataDao.loadData(documentId, 0);
             response.setContentType(root.getMimeType());
             response.setContentLength(bytes.length);
             response.setHeader("Content-Disposition", "attachment; filename=\"" + root.getName());

@@ -42,8 +42,8 @@
     <div class="row-fluid">
         <div class="span12">
             <table class="table table-hover">
-                <tr th:each="backupDate : ${document.sortedDatesOfBackups()}" class="document-row">
-                    <td th:text="${backupDate}" onclick="loadBackup($(this).html())">
+                <tr th:each="backupDate : ${documentVersion.findSortedByDocumentId(${document.id})}" class="document-row">
+                    <td th:text="${backupDate.creation_time}" onclick="loadBackup($(this).html())">
                         example.txt
                     </td>
 
@@ -95,7 +95,7 @@
     function loadBackup(backupDate) {
         /* <![CDATA[ */
         /*[+
-        var text = ${document.getDataByDate('2013-05-16 16:47:32')};
+        var text = [[${document.getDataByDate('2013-05-16 16:47:32')}]];
         alert(text);
         +]*/
 

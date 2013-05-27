@@ -117,7 +117,7 @@ public class ArchiveHelper {
             }
         } else {
             out.putNextEntry(new ZipEntry(relativePath));
-            byte[] bytes = readOnlyDataDao.loadData(document.getId());
+            byte[] bytes = readOnlyDataDao.loadData(document.getId(), 0);
             out.write(bytes);
             out.closeEntry();
         }

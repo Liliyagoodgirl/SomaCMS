@@ -15,5 +15,4 @@ public interface Document {
     boolean isFolder();
     Date getCreated();
     Date getModified();
-    boolean isBackup();
 }

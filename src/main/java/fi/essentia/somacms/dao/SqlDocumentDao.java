@@ -57,9 +57,9 @@ public class SqlDocumentDao implements DocumentDao {
 
     @Override
     public void update(Document document) {
-        jdbcTemplate.update("UPDATE document SET name=?, size=?, parent_id=?, mime_type=?, folder=?, created=?, modified=?, backup=? WHERE id=?",
+        jdbcTemplate.update("UPDATE document SET name=?, size=?, parent_id=?, mime_type=?, folder=?, created=?, modified=? WHERE id=?",
                 document.getName(), document.getSize(), document.getParentId(), document.getMimeType(), document.isFolder(), document.getCreated(), document.getModified(),
-                document.isBackup(), document.getId());
+                document.getId());
     }
 
     @Override
@@ -72,43 +72,8 @@ public class SqlDocumentDao implements DocumentDao {
     }
 
     @Override
-    public Integer numberOfBackups(Long parentId, String documentName) {
-        String nameTemplate = documentName + "_%";
-        String query = "SELECT name FROM document WHERE parent_id=? and name LIKE ?";
-        List<String> rows = jdbcTemplate.queryForList(query, String.class, parentId, nameTemplate);
-        Integer maxVersion = 0;
-        for (String name : rows) {
-            Integer version = Integer.parseInt(name.substring(nameTemplate.length()-1));
-            if (version > maxVersion) maxVersion = version;
-        }
-        return maxVersion;
-    }
-
-    @Override
-    public Long idOfOldestBackup(Long parentId, String documentName) throws ParseException {
-        String nameTemplate = documentName + "_%";
-        String query = "SELECT * FROM document WHERE parent_id=? and name LIKE ?";
-        List<DatabaseDocument> rows = jdbcTemplate.query(query, BeanPropertyRowMapper.newInstance(DatabaseDocument.class), parentId, nameTemplate);
-        Date oldestDate = new Date();
-        Long id = null;
-        for (DatabaseDocument document : rows) {
-            Date created = document.getModified();
-            if (created.compareTo(oldestDate) < 0 ) {
-                oldestDate = created;
-                id = document.getId();
-            }
-        }
-    return id;
-    }
-
-    @Override
     public List<DatabaseDocument> findAll() {
         return jdbcTemplate.query("SELECT * FROM document", BeanPropertyRowMapper.newInstance(DatabaseDocument.class));
-    }
-
-    @Override
-    public List<DatabaseDocument> findAllWithoutBackups() {
-        return jdbcTemplate.query("SELECT * FROM document WHERE backup<>1", BeanPropertyRowMapper.newInstance(DatabaseDocument.class));
     }
 
     @Override public void deleteById(Long documentId) {

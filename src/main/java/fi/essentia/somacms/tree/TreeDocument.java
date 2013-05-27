@@ -22,7 +22,6 @@ public class TreeDocument implements Document {
 
     private Map<String, TreeDocument> nameToChild = new HashMap<String, TreeDocument>();
     private SortedSet<TreeDocument> children = new TreeSet<TreeDocument>(new TreeDocumentComparator());
-    private Map<String, String> backupDateToData = new HashMap<String, String>();
 
     public TreeDocument(DatabaseDocument databaseDocument) {
         this.databaseDocument = databaseDocument;
@@ -39,26 +38,6 @@ public class TreeDocument implements Document {
 
     public synchronized Collection<TreeDocument> getChildren() {
         return Collections.unmodifiableCollection(children);
-    }
-
-    public synchronized void addBackupDateToData(String date, String data) {
-        backupDateToData.put(date, data);
-    }
-
-    public synchronized void removeBackupData(String date) {
-        backupDateToData.remove(date);
-    }
-
-    public synchronized List<Date> sortedDatesOfBackups() {
-        List<Date> sortedDates = new ArrayList(backupDateToData.keySet());
-        Collections.sort(sortedDates);
-        Collections.reverse(sortedDates);
-
-        return sortedDates;
-    }
-
-    public synchronized String getDataByDate(String date) {
-        return backupDateToData.get(date);
     }
 
     public String getPath() {

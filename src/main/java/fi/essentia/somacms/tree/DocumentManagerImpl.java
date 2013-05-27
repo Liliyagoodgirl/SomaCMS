@@ -5,6 +5,7 @@ import com.google.common.collect.Collections2;
 import fi.essentia.somacms.controllers.UnauthorizedException;
 import fi.essentia.somacms.dao.DataDao;
 import fi.essentia.somacms.dao.DocumentDao;
+import fi.essentia.somacms.dao.VersionDao;
 import fi.essentia.somacms.models.DatabaseDocument;
 import org.apache.commons.lang.StringUtils;
 import org.apache.tika.Tika;
@@ -34,7 +35,7 @@ public class DocumentManagerImpl implements DocumentManager {
 
     @Autowired DocumentDao documentDao;
     @Autowired DataDao dataDao;
-
+    @Autowired VersionDao versionDao;
 
     @PostConstruct
     public void initialize() {
@@ -60,10 +61,10 @@ public class DocumentManagerImpl implements DocumentManager {
     }
 
     private void loadDocuments() {
-        List<DatabaseDocument> databaseDocuments = documentDao.findAllWithoutBackups();
+        List<DatabaseDocument> databaseDocuments = documentDao.findAll();
         for (DatabaseDocument databaseDocument : databaseDocuments) {
             TreeDocument treeDocument = new TreeDocument(databaseDocument);
-            Integer numberOfBackups = documentDao.numberOfBackups(databaseDocument.getParentId(), databaseDocument.getName());
+            /*Integer numberOfBackups = documentDao.numberOfBackups(databaseDocument.getParentId(), databaseDocument.getName());
             for (int i = 1; i <= numberOfBackups; i++) {
                 String backupName = databaseDocument.getName() + "_" + i;
                 DatabaseDocument backupDocument = documentDao.findByParentIdAndName(databaseDocument.getParentId(), backupName);
@@ -71,7 +72,7 @@ public class DocumentManagerImpl implements DocumentManager {
                 String modifiedDate = backupDocument.getModified().toString();
                 modifiedDate = modifiedDate.replace(".0", "");
                 treeDocument.addBackupDateToData(modifiedDate, new String(currentBytes));
-            }
+            }*/
             idToDocument.put(treeDocument.getId(), treeDocument);
         }
     }
@@ -130,7 +131,8 @@ public class DocumentManagerImpl implements DocumentManager {
     @Override
     public TreeDocument createTextFile(Long parentId, String name) {
         TreeDocument document = createDocument(parentId, name, false);
-        dataDao.insertData(document.getId(), new byte[0]);
+        versionDao.insertVersion(document.getId(), 0, new Date());
+        dataDao.insertData(document.getId(), 0, new byte[0]);
         return document;
     }
 
@@ -151,46 +153,44 @@ public class DocumentManagerImpl implements DocumentManager {
         String mimeType = tika.detect(bytes, fileName);
         TreeDocument parent = folder(parentId);
         TreeDocument document = parent.childByName(fileName);
+        Date currentDate = new Date();
+
         if (document == null) {
+
             logger.debug("New document, parentId = " + parentId + ", fileName = " + fileName);
             DatabaseDocument databaseDocument = new DatabaseDocument();
             databaseDocument.setName(fileName);
             databaseDocument.setParentId(parent.getId());
-            databaseDocument.setModified(new Date());
+            databaseDocument.setModified(currentDate);
             databaseDocument.setSize(bytes.length);
             databaseDocument.setMimeType(mimeType);
-            databaseDocument.setBackup(false);
-            documentDao.save(databaseDocument);
-            dataDao.insertData(databaseDocument.getId(), bytes);
+            long documentId = documentDao.save(databaseDocument);
+            versionDao.insertVersion(documentId, 0, currentDate);
+            dataDao.insertData(documentId, 0, bytes);
             document = addToTree(databaseDocument, parentId);
         } else {
-            //TODO Check the number of versions, should not be more than 5 for ex
 
             // Store the current document as the next version
-            //TODO Change the version #
-            Integer latestVersion = documentDao.numberOfBackups(parentId, fileName);
-            logger.debug("latest version " + latestVersion);
+            Long documentId = document.getId();
+            Integer latestVersion = versionDao.maxVersion(documentId);
+            logger.debug("Latest version " + latestVersion);
+            byte[] currentBytes = dataDao.loadData(documentId, 0);
+            versionDao.insertVersion(documentId, latestVersion + 1, currentDate);
+            dataDao.insertData(documentId, latestVersion + 1, currentBytes);
+            logger.debug("New version " + latestVersion + 1  + " for the document, parentId = " + parentId + ", fileName = " + fileName);
 
-            // Create a new version
-            if (latestVersion < 5) {
-                String newVersion = Integer.toString(latestVersion + 1);
-                String newVersionFileName = fileName + "_" + newVersion;
-                DatabaseDocument databaseDocument = new DatabaseDocument();
-                databaseDocument.setName(newVersionFileName);
-                databaseDocument.setParentId(parentId);
-                Date date = new Date();
-                databaseDocument.setModified(date);
-                Format formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                String dateString = formatter.format(date);
-                databaseDocument.setBackup(true);
-                byte[] currentBytes = dataDao.loadData(document.getId());
-                databaseDocument.setSize(currentBytes.length);
-                databaseDocument.setMimeType(document.getMimeType());
-                documentDao.save(databaseDocument);
-                dataDao.insertData(databaseDocument.getId(), currentBytes);
-                document.addBackupDateToData(dateString, new String(currentBytes));
-                logger.debug("New version " + newVersion + " for the document, parentId = " + parentId + ", fileName = " + fileName);
-            }
+            // Overwrite the document itself
+            document.setModified(currentDate);
+            document.setSize(bytes.length);
+            document.setMimeType(mimeType);
+            documentDao.update(document);
+            versionDao.update(document.getId(), 0, currentDate);
+            dataDao.updateData(documentId, 0, bytes);
+
+
+            /*
+            Format formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            String dateString = formatter.format(date);
 
             // Overwrite the oldest version
             else {
@@ -202,7 +202,7 @@ public class DocumentManagerImpl implements DocumentManager {
                 oldestDocument.setModified(newDate);
                 Format formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                 String newDateString = formatter.format(newDate);
-                byte[] currentBytes = dataDao.loadData(document.getId());
+                byte[] currentBytes = dataDao.loadData(document.getId(), );
                 oldestDocument.setSize(currentBytes.length);
                 oldestDocument.setMimeType(document.getMimeType());
                 oldestDocument.setBackup(true);
@@ -212,14 +212,7 @@ public class DocumentManagerImpl implements DocumentManager {
                 document.addBackupDateToData(newDateString, new String(currentBytes));
                 logger.debug("Replaced oldest version for the document, documentId = " + replaceDocumentId);
             }
-
-            // Deal with the current version of the document
-            document.setModified(new Date());
-            document.setSize(bytes.length);
-            document.setMimeType(mimeType);
-            document.setBackup(false);
-            documentDao.update(document);
-            dataDao.updateData(document.getId(), bytes);
+            */
         }
         return document;
     }

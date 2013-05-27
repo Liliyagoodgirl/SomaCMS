@@ -5,5 +5,5 @@ package fi.essentia.somacms.dao;
  * DocumentManager.
  */
 public interface ReadOnlyDataDao {
-    byte[] loadData(long documentId);
+    byte[] loadData(long documentId, int documentVersion);
 }
